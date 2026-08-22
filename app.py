@@ -20,18 +20,27 @@ from extractor import classify_bio
 
 st.set_page_config(page_title="Angel Investor Fit Finder", layout="centered")
 
-st.title("Angel Investor Fit Finder")
+st.title("BA3F - Business Angels Funding Fit Finder")
 st.caption(
     "Paste a public investor bio (LinkedIn summary, AngelList profile, "
     "pitch-feedback email, etc.) to see their likely investing type and "
-    "whether they're a good fit for your pitch — based on a business angel "
-    "typology framework from academic research."
+    "whether they're a good fit for your pitch — rooted in the exhaustive " 
+    "literature results on business angel typologies and behavior framework "
+    "master's thesis."
 )
 
 # -----------------------------------------------------------------------
 # INPUTS
 # -----------------------------------------------------------------------
 with st.form("bio_form"):
+
+    st.markdown("**Business Angels Fit Check**")
+    st.caption(
+        "Example bios you can try:\n\n"
+        "Carsten Maschmeyer has invested in over 30 startups since establishing Seed & Speed Ventures, primarily targeting scalable business models in InsurTech, PropTech, FinTech, and HealthTech.  He emphasizes the founding team over strict traction, stating, (I invest in founders, not business plans). Typically writing checks between €50,000 and €3 million, he acts as a strategic sparring partner, leveraging his sales expertise and VIP network to help startups scale, often co-investing alongside lead investors rather than leading alone\n\n"
+        "Verena Pausder began angel investing in 2015 with a dual mandate of financial return and societal impact, heavily favoring EdTech, HealthTech, and FoodTech.  As a former founder herself, she invests on eye level, prioritizing the team's mindset and the scalability of the problem they solve. She is a vocal advocate for female founders, noting that female angels invest in women-led startups twice as often as men, and famously urges investors to (put your money where your mouth is) to keep European scale-ups from being sold abroad prematurely"
+    )
+
     bio_text = st.text_area(
         "Investor bio text",
         height=180,
@@ -51,8 +60,7 @@ with st.form("bio_form"):
         )
 
     use_live_mode = st.checkbox(
-        "Use real AI (requires a free Gemini API key set up on this machine). "
-        "Leave unchecked to see a demo result with no API key needed.",
+        "Use AI-LLM (requires a Gemini API key set up on this machine).",
         value=False,
     )
 
