@@ -12,10 +12,14 @@ WHAT YOU NEED FOR GEMINI (currently active):
 2. Save it as an environment variable named GEMINI_API_KEY.
 3. Run: pip install google-genai pydantic
 
-NOTE (Aug 2026): Google periodically retires older model names. If you
-ever get a 404 "model no longer available" error again, check
-ai.google.dev/gemini-api/docs/models for the current free Flash model
-name and update MODEL_NAME below — nothing else needs to change.
+NOTE (Oct 2026): Google retires/renames free-tier model names often, and
+occasionally returns a 503 "high demand" error even on a valid model name
+(this is a temporary server overload, not a bug in this code). To handle
+both situations, MODEL_CHAIN below lists a primary model and a backup —
+if the primary is unavailable or overloaded, the code automatically
+retries with the next one in the list. If you ever see persistent 404
+"model not found" errors, check ai.google.dev/gemini-api/docs/models for
+the current model name and update MODEL_CHAIN.
 
 Until you add a key, this file runs in MOCK MODE (fake but structurally
 correct output) so you can see the full pipeline working end-to-end.
@@ -24,8 +28,9 @@ correct output) so you can see the full pipeline working end-to-end.
 from schema import AngelProfile
 from rules import score_behavior_profile
 
-# Update this single constant if Google retires the model name again.
-MODEL_NAME = "gemini-3.8-flash"
+# Update this list if Google retires a model name again, or if you keep
+# seeing 503 "high demand" errors — the code tries each one in order.
+MODEL_CHAIN = ["gemini-3.8-flash", "gemini-flash-lite-latest"]
 
 # -----------------------------------------------------------------------
 # STEP 1: The knowledge the AI is given (taken directly from your thesis)
@@ -132,6 +137,24 @@ def _tags_from_profile(profile: AngelProfile) -> list[str]:
         profile.organization.network_position.label,
     ]
 
+def _call_gemini_with_fallback(client, contents, config):
+    """
+    Tries each model in MODEL_CHAIN in order. If a model is overloaded
+    (503 "high demand") or temporarily unavailable, automatically tries
+    the next one instead of failing outright.
+    """
+    from google.genai import errors as genai_errors
+
+    last_error = None
+    for model_name in MODEL_CHAIN:
+        try:
+            return client.models.generate_content(
+                model=model_name, contents=contents, config=config
+            )
+        except genai_errors.ServerError as e:
+            last_error = e
+            continue
+    raise last_error
 
 # -----------------------------------------------------------------------
 # STEP 3: The actual function the app will call
@@ -176,8 +199,8 @@ priority_signal, caution_note, and pitch_recommendation.
 
     client = genai.Client()  # reads GEMINI_API_KEY from environment automatically
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
+    response = _call_gemini_with_fallback(
+        client,
         contents=user_prompt,
         config={
             "system_instruction": SYSTEM_PROMPT,
