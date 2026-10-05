@@ -25,7 +25,7 @@ from schema import AngelProfile
 from rules import score_behavior_profile
 
 # Update this single constant if Google retires the model name again.
-MODEL_NAME = "gemini-3.6-flash"
+MODEL_NAME = "gemini-3.8-flash"
 
 # -----------------------------------------------------------------------
 # STEP 1: The knowledge the AI is given (taken directly from your thesis)
